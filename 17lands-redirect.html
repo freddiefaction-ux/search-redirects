@@ -291,7 +291,7 @@
 
   // ── Parse ────────────────────────────────────────────────────────────────────
   function parseQuery(raw) {
-    const tokens = raw.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    const tokens = raw.trim().toLowerCase().split(/[\s+]+/).filter(Boolean);
     if (tokens.length === 0) return null;
 
     let expansion = null;
