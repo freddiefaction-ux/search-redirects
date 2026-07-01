@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>17Lands Quick Search</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --border: #2a2d3a;
+      --accent: #c89b3c;
+      --accent-dim: #8a6a28;
+      --text: #d4d4d8;
+      --text-dim: #6b7280;
+      --text-bright: #f4f4f5;
+      --green: #4ade80;
+      --red: #f87171;
+      --mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+      --sans: 'Inter', system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 560px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .logo-17 {
+      font-family: var(--mono);
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.05em;
+    }
+
+    .logo-lands {
+      font-size: 1rem;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .logo-arrow {
+      margin-left: auto;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      font-family: var(--mono);
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .card-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 0.75rem;
+      font-family: var(--mono);
+    }
+
+    /* Status display */
+    .status {
+      font-family: var(--mono);
+      font-size: 0.95rem;
+      line-height: 1.8;
+    }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.2rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .status-row:last-child { border-bottom: none; }
+
+    .status-key { color: var(--text-dim); }
+    .status-val { color: var(--text-bright); font-weight: 600; }
+    .status-val.ok { color: var(--green); }
+    .status-val.warn { color: var(--accent); }
+    .status-val.err { color: var(--red); }
+    .status-val.default { color: var(--text-dim); font-style: italic; }
+
+    /* Redirect bar */
+    .redirect-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .redirect-url {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.5rem 0.75rem;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .btn {
+      background: var(--accent);
+      color: #0f1117;
+      border: none;
+      border-radius: 4px;
+      padding: 0.5rem 1rem;
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+
+    .btn:hover { background: #d4a93e; }
+    .btn:disabled { background: var(--border); color: var(--text-dim); cursor: not-allowed; }
+
+    /* Countdown */
+    .countdown {
+      text-align: center;
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      margin-top: 0.75rem;
+    }
+
+    .countdown span {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    /* Syntax help */
+    .help {
+      margin-top: 1.5rem;
+    }
+
+    .help-title {
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 0.75rem;
+      font-family: var(--mono);
+    }
+
+    .example-row {
+      display: flex;
+      align-items: baseline;
+      gap: 0.75rem;
+      padding: 0.35rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+
+    .example-row:last-child { border-bottom: none; }
+
+    .example-query {
+      font-family: var(--mono);
+      color: var(--accent);
+      min-width: 140px;
+    }
+
+    .example-desc {
+      color: var(--text-dim);
+      font-size: 0.78rem;
+    }
+
+    /* Error state */
+    .error-msg {
+      color: var(--red);
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      padding: 0.75rem;
+      background: rgba(248, 113, 113, 0.08);
+      border: 1px solid rgba(248, 113, 113, 0.2);
+      border-radius: 4px;
+    }
+
+    .no-query {
+      text-align: center;
+      padding: 1rem 0;
+    }
+
+    .no-query p {
+      color: var(--text-dim);
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .hint {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="logo">
+    <span class="logo-17">17</span>
+    <span class="logo-lands">Lands</span>
+    <span class="logo-arrow">quick nav →</span>
+  </div>
+
+  <div class="card" id="main-card">
+    <div class="card-label">Parsing query</div>
+    <div id="output" class="no-query">
+      <p>No query provided.</p>
+      <p class="hint">Use as: <code>17 msh</code> or <code>17 dsk sealed</code></p>
+    </div>
+  </div>
+
+  <div class="help card">
+    <div class="help-title">Syntax</div>
+    <div class="example-row">
+      <span class="example-query">msh</span>
+      <span class="example-desc">MSH · PremierDraft (default)</span>
+    </div>
+    <div class="example-row">
+      <span class="example-query">dsk sealed</span>
+      <span class="example-desc">DSK · Sealed</span>
+    </div>
+    <div class="example-row">
+      <span class="example-query">msh premier</span>
+      <span class="example-desc">MSH · PremierDraft</span>
+    </div>
+    <div class="example-row">
+      <span class="example-query">otj s</span>
+      <span class="example-desc">OTJ · Sealed (short aliases work)</span>
+    </div>
+    <div class="example-row">
+      <span class="example-query">fdn p</span>
+      <span class="example-desc">FDN · PremierDraft</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ── Config ──────────────────────────────────────────────────────────────────
+  const DEFAULT_FORMAT = 'PremierDraft';
+
+  const FORMAT_ALIASES = {
+    'premierdraft': 'PremierDraft',
+    'premier':      'PremierDraft',
+    'pd':           'PremierDraft',
+    'p':            'PremierDraft',
+    'draft':        'PremierDraft',
+    'sealed':       'Sealed',
+    's':            'Sealed',
+    'se':           'Sealed',
+    'tradsealed':   'TradSealed',
+    'ts':           'TradSealed',
+    'traddraft':    'TradDraft',
+    'td':           'TradDraft',
+  };
+
+  // ── Parse ────────────────────────────────────────────────────────────────────
+  function parseQuery(raw) {
+    const tokens = raw.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    if (tokens.length === 0) return null;
+
+    let expansion = null;
+    let format = null;
+
+    for (const token of tokens) {
+      if (FORMAT_ALIASES[token]) {
+        format = FORMAT_ALIASES[token];
+      } else if (!expansion) {
+        expansion = token.toUpperCase();
+      }
+    }
+
+    return {
+      expansion: expansion || null,
+      format: format || DEFAULT_FORMAT,
+      formatWasDefault: !format,
+    };
+  }
+
+  function buildUrl(expansion, format) {
+    const base = 'https://www.17lands.com/card_data';
+    const params = new URLSearchParams({
+      expansion: expansion.toLowerCase(),
+      format: format,
+      sort: 'ever_drawn_win_rate,desc',
+      view: 'grades',
+    });
+    return `${base}?${params.toString()}`;
+  }
+
+  // ── Render ───────────────────────────────────────────────────────────────────
+  function render() {
+    const raw = new URLSearchParams(window.location.search).get('q') || '';
+    const output = document.getElementById('output');
+    const card = document.getElementById('main-card');
+
+    if (!raw.trim()) return; // leave default "no query" state
+
+    const parsed = parseQuery(raw);
+
+    if (!parsed || !parsed.expansion) {
+      card.querySelector('.card-label').textContent = 'Error';
+      output.innerHTML = `<div class="error-msg">Couldn't find a set code in: <strong>${escHtml(raw)}</strong><br>Example: <code>msh</code> or <code>dsk sealed</code></div>`;
+      return;
+    }
+
+    const url = buildUrl(parsed.expansion, parsed.format);
+
+    card.querySelector('.card-label').textContent = 'Redirecting';
+    output.innerHTML = `
+      <div class="status">
+        <div class="status-row">
+          <span class="status-key">query</span>
+          <span class="status-val">${escHtml(raw)}</span>
+        </div>
+        <div class="status-row">
+          <span class="status-key">expansion</span>
+          <span class="status-val ok">${escHtml(parsed.expansion)}</span>
+        </div>
+        <div class="status-row">
+          <span class="status-key">format</span>
+          <span class="status-val ${parsed.formatWasDefault ? 'default' : 'ok'}">${escHtml(parsed.format)}${parsed.formatWasDefault ? ' (default)' : ''}</span>
+        </div>
+      </div>
+      <div class="redirect-bar">
+        <div class="redirect-url">${escHtml(url)}</div>
+        <button class="btn" id="go-btn" onclick="go()">Go →</button>
+      </div>
+      <div class="countdown" id="countdown">Redirecting in <span id="ticker">2</span>s…</div>
+    `;
+
+    // Countdown + auto-redirect
+    let t = 2;
+    const ticker = document.getElementById('ticker');
+    const interval = setInterval(() => {
+      t--;
+      if (t <= 0) {
+        clearInterval(interval);
+        go(url);
+      } else {
+        ticker.textContent = t;
+      }
+    }, 1000);
+
+    window._redirectUrl = url;
+  }
+
+  function go(url) {
+    window.location.replace(url || window._redirectUrl);
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  render();
+</script>
+</body>
+</html>
