@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coachless Quick Search</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --border: #2a2d3a;
+      --accent: #5b8dd9;
+      --text: #d4d4d8;
+      --text-dim: #6b7280;
+      --text-bright: #f4f4f5;
+      --green: #4ade80;
+      --red: #f87171;
+      --gold: #c89b3c;
+      --mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+      --sans: 'Inter', system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 580px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .logo-main {
+      font-family: var(--mono);
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.03em;
+    }
+
+    .logo-sub {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .logo-arrow {
+      margin-left: auto;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      font-family: var(--mono);
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .card-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 0.75rem;
+      font-family: var(--mono);
+    }
+
+    .status {
+      font-family: var(--mono);
+      font-size: 0.95rem;
+      line-height: 1.8;
+    }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.2rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .status-row:last-child { border-bottom: none; }
+
+    .status-key { color: var(--text-dim); }
+    .status-val { color: var(--text-bright); font-weight: 600; }
+    .status-val.ok { color: var(--green); }
+    .status-val.default { color: var(--text-dim); font-style: italic; }
+
+    .redirect-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .redirect-url {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.5rem 0.75rem;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .btn {
+      background: var(--accent);
+      color: #0f1117;
+      border: none;
+      border-radius: 4px;
+      padding: 0.5rem 1rem;
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+
+    .btn:hover { background: #7aaae8; }
+
+    .countdown {
+      text-align: center;
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      margin-top: 0.75rem;
+    }
+
+    .countdown span { color: var(--accent); font-weight: 700; }
+
+    .no-query {
+      text-align: center;
+      padding: 1rem 0;
+    }
+
+    .no-query p { color: var(--text-dim); font-size: 0.9rem; margin-bottom: 0.5rem; }
+    .hint { font-family: var(--mono); font-size: 0.8rem; color: var(--accent); }
+
+    .error-msg {
+      color: var(--red);
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      padding: 0.75rem;
+      background: rgba(248, 113, 113, 0.08);
+      border: 1px solid rgba(248, 113, 113, 0.2);
+      border-radius: 4px;
+    }
+
+    /* Help table */
+    .help-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .help-section-title {
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 0.5rem;
+      font-family: var(--mono);
+    }
+
+    .alias-row {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.25rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.82rem;
+    }
+
+    .alias-row:last-child { border-bottom: none; }
+
+    .alias-keys {
+      font-family: var(--mono);
+      color: var(--accent);
+      min-width: 80px;
+    }
+
+    .alias-val { color: var(--text-dim); }
+
+    .example-row {
+      display: flex;
+      align-items: baseline;
+      gap: 0.75rem;
+      padding: 0.3rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.82rem;
+    }
+
+    .example-row:last-child { border-bottom: none; }
+    .example-query { font-family: var(--mono); color: var(--gold); min-width: 200px; }
+    .example-desc { color: var(--text-dim); font-size: 0.78rem; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="logo">
+    <span class="logo-main">coachless</span>
+    <span class="logo-sub">.gg</span>
+    <span class="logo-arrow">quick nav →</span>
+  </div>
+
+  <div class="card" id="main-card">
+    <div class="card-label">Parsing query</div>
+    <div id="output" class="no-query">
+      <p>No query provided.</p>
+      <p class="hint">e.g. gangplank · gangplank top · gangplank runes mid</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-label">Examples</div>
+    <div class="example-row">
+      <span class="example-query">gangplank</span>
+      <span class="example-desc">Gangplank · builds (default)</span>
+    </div>
+    <div class="example-row">
+      <span class="example-query">gangplank top</span>
+      <span class="example-desc">Gangplank · builds · top</span>
+    </div>
+    <div class="example-row">
+      <span class="example-query">gangplank runes top</span>
+      <span class="example-desc">Gangplank · runes · top</span>
+    </div>
+    <div class="example-row">
+      <span class="example-query">karthus r j</span>
+      <span class="example-desc">Karthus · runes · jungle</span>
+    </div>
+    <div class="example-row">
+      <span class="example-query">ezreal i bot</span>
+      <span class="example-desc">Ezreal · items · adc</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="help-grid">
+      <div>
+        <div class="help-section-title">Page aliases</div>
+        <div class="alias-row"><span class="alias-keys">builds, b</span><span class="alias-val">builds</span></div>
+        <div class="alias-row"><span class="alias-keys">items, i</span><span class="alias-val">items</span></div>
+        <div class="alias-row"><span class="alias-keys">runes, r</span><span class="alias-val">runes</span></div>
+        <div class="alias-row"><span class="alias-keys">spells, sp</span><span class="alias-val">spells</span></div>
+      </div>
+      <div>
+        <div class="help-section-title">Role aliases</div>
+        <div class="alias-row"><span class="alias-keys">top, t</span><span class="alias-val">top</span></div>
+        <div class="alias-row"><span class="alias-keys">jungle, j</span><span class="alias-val">jungle</span></div>
+        <div class="alias-row"><span class="alias-keys">mid, m</span><span class="alias-val">mid</span></div>
+        <div class="alias-row"><span class="alias-keys">adc, bot, a</span><span class="alias-val">adc</span></div>
+        <div class="alias-row"><span class="alias-keys">support, sup, s</span><span class="alias-val">support</span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const DEFAULT_PAGE = 'builds';
+
+  const PAGE_ALIASES = {
+    'builds': 'builds', 'b': 'builds',
+    'items': 'items',   'i': 'items',
+    'runes': 'runes',   'r': 'runes',
+    'spells': 'spells', 'sp': 'spells',
+  };
+
+  const ROLE_ALIASES = {
+    'top': 'top',         't': 'top',
+    'jungle': 'jungle',   'j': 'jungle',
+    'mid': 'mid',         'm': 'mid',
+    'adc': 'adc',         'bot': 'adc',  'a': 'adc',
+    'support': 'support', 'sup': 'support', 's': 'support',
+  };
+
+  // Known multi-word champion names (lowercase, no spaces — coachless uses no spaces in URL)
+  // We join all unrecognised tokens as the champion name to handle e.g. "lee sin"
+  function parseQuery(raw) {
+    // Decode + as space (from URL encoding)
+    const decoded = raw.replace(/\+/g, ' ');
+    const tokens = decoded.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    if (tokens.length === 0) return null;
+
+    let page = null;
+    let role = null;
+    const championTokens = [];
+
+    for (const token of tokens) {
+      if (PAGE_ALIASES[token] && !page) {
+        page = PAGE_ALIASES[token];
+      } else if (ROLE_ALIASES[token] && !role) {
+        role = ROLE_ALIASES[token];
+      } else {
+        championTokens.push(token);
+      }
+    }
+
+    const champion = championTokens.join('') || null; // join without space for URL e.g. "leesin"
+
+    return {
+      champion,
+      page: page || DEFAULT_PAGE,
+      role: role || null,
+      pageWasDefault: !page,
+      roleWasDefault: !role,
+    };
+  }
+
+  function buildUrl(champion, page, role) {
+    let url = `https://coachless.gg/${page}/${champion}`;
+    if (role) url += `?role=${role}`;
+    return url;
+  }
+
+  function render() {
+    const raw = new URLSearchParams(window.location.search).get('q') || '';
+    const output = document.getElementById('output');
+    const card = document.getElementById('main-card');
+
+    if (!raw.trim()) return;
+
+    const parsed = parseQuery(raw);
+
+    if (!parsed || !parsed.champion) {
+      card.querySelector('.card-label').textContent = 'Error';
+      output.innerHTML = `<div class="error-msg">Couldn't find a champion name in: <strong>${esc(raw)}</strong><br>Example: <code>gangplank runes top</code></div>`;
+      return;
+    }
+
+    const url = buildUrl(parsed.champion, parsed.page, parsed.role);
+
+    card.querySelector('.card-label').textContent = 'Redirecting';
+    output.innerHTML = `
+      <div class="status">
+        <div class="status-row">
+          <span class="status-key">query</span>
+          <span class="status-val">${esc(raw.replace(/\+/g, ' '))}</span>
+        </div>
+        <div class="status-row">
+          <span class="status-key">champion</span>
+          <span class="status-val ok">${esc(parsed.champion)}</span>
+        </div>
+        <div class="status-row">
+          <span class="status-key">page</span>
+          <span class="status-val ${parsed.pageWasDefault ? 'default' : 'ok'}">${esc(parsed.page)}${parsed.pageWasDefault ? ' (default)' : ''}</span>
+        </div>
+        <div class="status-row">
+          <span class="status-key">role</span>
+          <span class="status-val ${parsed.roleWasDefault ? 'default' : 'ok'}">${parsed.role ? esc(parsed.role) : '— (not specified)'}</span>
+        </div>
+      </div>
+      <div class="redirect-bar">
+        <div class="redirect-url">${esc(url)}</div>
+        <button class="btn" onclick="window.location.replace('${esc(url)}')">Go →</button>
+      </div>
+      <div class="countdown">Redirecting in <span id="ticker">2</span>s…</div>
+    `;
+
+    let t = 2;
+    const ticker = document.getElementById('ticker');
+    const interval = setInterval(() => {
+      t--;
+      if (t <= 0) { clearInterval(interval); window.location.replace(url); }
+      else ticker.textContent = t;
+    }, 1000);
+  }
+
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  render();
+</script>
+</body>
+</html>
